@@ -1410,7 +1410,7 @@ init(Handle<Object> target) {
       _wfullpath(path, pathDir, MAX_PATH);
       set_dll_directory(path);
       caller.set_func(set_dll_directory);
-      assert (!FAILED(__HrLoadAllImportsForDll("libzmq-v100-mt-4_0_4.dll")) &&
+      assert (!FAILED(__HrLoadAllImportsForDll("libzmq.dll")) &&
           "delayload error");
     }
   }
