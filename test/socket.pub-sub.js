@@ -34,7 +34,8 @@ describe('socket.pub-sub', function(){
 
     var addr = "inproc://stuff_ssps";
 
-    sub.bind(addr, function(){
+    sub.bind(addr, function (error) {
+      if (error) throw error;
       pub.connect(addr);
 
       // The connect is asynchronous, and messages published to a non-
@@ -75,7 +76,8 @@ describe('socket.pub-sub', function(){
       }
     });
 
-    sub.bind('inproc://stuff_sspsf', function(){
+    sub.bind('inproc://stuff_sspsf', function (error) {
+      if (error) throw error;
       pub.connect('inproc://stuff_sspsf');
 
       // See comments on pub-sub test.
@@ -85,6 +87,46 @@ describe('socket.pub-sub', function(){
         pub.send('ruby is meh');
         pub.send('py is pretty cool');
         pub.send('luna is cool too');
+      }, 100.0);
+    });
+  });
+
+  it('should continue to deliver messages even after error in message handler is thrown', function(done){
+    var n = 0;
+
+    sub.subscribe('');
+    var errorHandlerCalled = 0;
+
+    sub.on('error', function (error) {
+      errorHandlerCalled++;
+    });
+
+    sub.on('message', function (msg) {
+      msg.should.be.an.instanceof(Buffer);
+      switch (n++) {
+        case 0:
+          msg.toString().should.equal('foo');
+          throw Error('test error');
+          break;
+        case 1:
+          msg.toString().should.equal('bar');
+          sub.close();
+          pub.close();
+          errorHandlerCalled.should.eql(1)
+          done();
+          break;
+      }
+    });
+
+    var addr = "inproc://stuff_ssps";
+
+    sub.bind(addr, function (error) {
+      if (error) throw error;
+      pub.connect(addr);
+
+      setTimeout(function() {
+        pub.send('foo');
+        pub.send('bar');
       }, 100.0);
     });
   });
